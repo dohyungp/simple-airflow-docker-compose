@@ -1,0 +1,39 @@
+version: "3"
+services:
+  mysql:
+    image: mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=supersecret
+      - MYSQL_USER=airflow
+      - MYSQL_PASSWORD=airflow
+      - MYSQL_DATABASE=airflow
+    volumes:
+      - db:/var/lib/mysql
+  scheduler:
+    image: apache/airflow
+    command: scheduler
+    restart: always
+    depends_on:
+      - mysql
+    env_file:
+      - .env
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./logs:/opt/airflow/logs
+  webserver:
+    image: apache/airflow
+    entrypoint: ./scripts/entrypoint.sh
+    restart: always
+    depends_on:
+      - mysql
+      - scheduler
+    env_file:
+      - .env
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./logs:/opt/airflow/logs
+      - ./scripts:/opt/airflow/scripts
+    ports:
+      - "8080:8080"
+volumes:
+  db:
